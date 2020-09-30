@@ -3,36 +3,47 @@ import * as tf from '@tensorflow/tfjs';
 const knnClassifier = require('@tensorflow-models/knn-classifier');
 const mobilenet = require('@tensorflow-models/mobilenet');
 const axios = require('axios');
-let webcamElement
-let webcam;
-let net;
-var classifier = knnClassifier.create();
 
 class Home extends React.Component {
 
+  state = {
+    webcam: null,
+    net: null,
+    classifier: null,
+  }
+
   componentDidMount = async () => {
 
-    webcamElement = document.getElementById('webcam');
-
     // Load the mobilenet model
-    net = await mobilenet.load();
-    this.load();
+    var netInit = await mobilenet.load();
+    var classifierInit = knnClassifier.create();
+    
 
     // Create an object from Tensorflow.js data API which could capture image 
     // from the web camera as Tensor.
     //Create a live webcam feed
-    webcam = await tf.data.webcam(webcamElement);
+    var webcamInit = await tf.data.webcam(document.getElementById('webcam'));
+
+    this.setState({
+      webcam: webcamInit,
+      net: netInit,
+      classifier: classifierInit,
+      
+    })
+
+    this.load();
+    
 
     //Continuously read the webcam feed.
     while (true) {
-      if (classifier.getNumClasses() > 0) {
+      if (this.state.classifier.getNumClasses() > 0) {
         //image from the webcam
-        const img = await webcam.capture();
+        const img = await this.state.webcam.capture();
 
         // Get the activation from mobilenet from the webcam.
-        const activation = net.infer(img, 'conv_preds');
+        const activation = this.state.net.infer(img, 'conv_preds');
         // Get the most likely class and confidence from the classifier module.
-        const result = await classifier.predictClass(activation);
+        const result = await this.state.classifier.predictClass(activation);
 
         const classes = ['Coffee Arabica', 'Parlour Palm', 'Aloe Vera'];
 
@@ -52,24 +63,32 @@ class Home extends React.Component {
   }
 
   addExample = async (classId) => {
+
+    var tempClassifier = this.state.classifier;
     // Capture an image from the web camera.
-    const img = await webcam.capture();
+    const img = await this.state.webcam.capture();
 
     // Get the intermediate activation of MobileNet 'conv_preds' and pass that
     // to the KNN classifier.
-    const activation = net.infer(img, 'conv_preds');
+    const activation = this.state.net.infer(img, 'conv_preds');
 
     // Pass the intermediate activation to the classifier.
     //Associate this activation function with the selected class
-    classifier.addExample(activation, classId);
+    tempClassifier.addExample(activation, classId);
 
     // Dispose the tensor to release the memory.
+
+    this.setState({
+      classifier: tempClassifier,
+    })
+    console.log(this.state);
+    
     this.save(classId)
     img.dispose();
   };
 
   save = async (classId) => {
-    let dataset = classifier.getClassifierDataset()
+    let dataset = this.state.classifier.getClassifierDataset()
     var datasetObj = {}
     Object.keys(dataset).forEach((key) => {
       let data = dataset[key].dataSync();
@@ -79,7 +98,6 @@ class Home extends React.Component {
     });
 
 
-    console.log({ [classId]  : datasetObj[classId]})
     await axios.post('http://localhost:3001/api/updatemodel', { [classId]  : datasetObj[classId]})
       .then(function (response) {
         console.log(response);
@@ -92,18 +110,19 @@ class Home extends React.Component {
   };
 
   load = async () => {
+
+    var tempClassifier = this.state.classifier;
     //can be change to other source
     await axios.get('http://localhost:3001/api/getmodel')
       .then(function (response) {
-        console.log(response.data);
-
         try {
           let tensorObj = response.data
           //covert back to tensor
           Object.keys(tensorObj).forEach((key) => {
             tensorObj[key] = tf.tensor(tensorObj[key], [tensorObj[key].length / 1024, 1024])
           })
-          classifier.setClassifierDataset(tensorObj);
+          tempClassifier.setClassifierDataset(tensorObj);
+
         }
         catch (error) {
           console.log(error)
@@ -113,6 +132,10 @@ class Home extends React.Component {
       .catch(function (error) {
         console.log(error);
       });
+
+      this.setState({
+        classifier: tempClassifier,
+      })
 
 
 
