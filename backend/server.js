@@ -7,17 +7,28 @@ var cors = require('cors')
 const bodyParser = require('body-parser');
 
 app.use(cors())
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(bodyParser.json({limit: '500kb'}));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '4gb' }));
 
 app.post('/api/updatemodel', async function (req, res) {
 
-  console.log(req.body)
+  var classId = Object.keys(req.body)[0]
 
-  fs.writeFile('classifier.json', JSON.stringify(req.body), function (err) {
+  var content = fs.readFileSync('classifier.json', 'utf8');
+  var contentJSON = JSON.parse(content);
+  var newValues = req.body[classId];
+
+  console.log(newValues)
+
+  contentJSON[classId] = newValues;
+  
+
+
+   fs.writeFile('classifier.json', JSON.stringify(contentJSON), function (err) {
     if (err) throw err;
     console.log('Saved!');
-  });
+  }); 
+
 
   res.end()
 
@@ -26,8 +37,8 @@ app.post('/api/updatemodel', async function (req, res) {
 app.get('/api/getmodel', async function (req, res) {
 
 
-  fs.readFile('classifier.json', function(err, data) {
-    res.writeHead(200, {'Content-Type': 'text/application'});
+  fs.readFile('classifier.json', function (err, data) {
+    res.writeHead(200, { 'Content-Type': 'text/application' });
     res.write(data);
     res.end();
   });

@@ -7,8 +7,6 @@ let webcamElement
 let webcam;
 let net;
 var classifier = knnClassifier.create();
-var fs = require('fs');
-var classifierJSON = require("./classifier.json")
 
 class Home extends React.Component {
 
@@ -66,11 +64,11 @@ class Home extends React.Component {
     classifier.addExample(activation, classId);
 
     // Dispose the tensor to release the memory.
-    this.save()
+    this.save(classId)
     img.dispose();
   };
 
-  save = async () => {
+  save = async (classId) => {
     let dataset = classifier.getClassifierDataset()
     var datasetObj = {}
     Object.keys(dataset).forEach((key) => {
@@ -79,12 +77,10 @@ class Home extends React.Component {
       // instead of object e.g {0:"0.1", 1:"-0.2"...}
       datasetObj[key] = Array.from(data);
     });
-    let jsonStr = JSON.stringify(datasetObj)
 
-    console.log(jsonStr)
-    //can be change to other source
 
-    await axios.post('http://localhost:3001/api/updatemodel', datasetObj)
+    console.log({ [classId]  : datasetObj[classId]})
+    await axios.post('http://localhost:3001/api/updatemodel', { [classId]  : datasetObj[classId]})
       .then(function (response) {
         console.log(response);
       })
