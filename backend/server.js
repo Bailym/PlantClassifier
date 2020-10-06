@@ -45,6 +45,6 @@ app.get('/api/getmodel', async function (req, res) {
 
 })
 
-
-app.listen(3001);
+var port = process.env.PORT || 80
+app.listen(port);
 console.log("Server running on port 3001");
