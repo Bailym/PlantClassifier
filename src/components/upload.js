@@ -12,7 +12,7 @@ class Upload extends React.Component {
             imagePreviewUrl: '',
             net: null,
             classifier: null,
-            imgTensor : null,
+            imgTensor: null,
         };
     }
 
@@ -68,46 +68,46 @@ class Upload extends React.Component {
         let dataset = this.state.classifier.getClassifierDataset()
         var datasetObj = {}
         Object.keys(dataset).forEach((key) => {
-          let data = dataset[key].dataSync();
-          // use Array.from() so when JSON.stringify() it covert to an array string e.g [0.1,-0.2...] 
-          // instead of object e.g {0:"0.1", 1:"-0.2"...}
-          datasetObj[key] = Array.from(data);
+            let data = dataset[key].dataSync();
+            // use Array.from() so when JSON.stringify() it covert to an array string e.g [0.1,-0.2...] 
+            // instead of object e.g {0:"0.1", 1:"-0.2"...}
+            datasetObj[key] = Array.from(data);
         });
-    
-    
+
+
         await axios.post('http://localhost:80/api/updatemodel', { [classId]: datasetObj[classId] })
-          .then(function (response) {
-            console.log(response);
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
-    
-    
-      };
+            .then(function (response) {
+                console.log(response);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+
+
+    };
 
     addExample = async (classId) => {
 
         var tempClassifier = this.state.classifier;
         // Capture an image from the web camera.
         const img = await this.state.imgTensor
-    
+
         // Get the intermediate activation of MobileNet 'conv_preds' and pass that
         // to the KNN classifier.
         const activation = this.state.net.infer(img, 'conv_preds');
-    
+
         // Pass the intermediate activation to the classifier.
         //Associate this activation function with the selected class
         tempClassifier.addExample(activation, classId);
-    
+
         // Dispose the tensor to release the memory.
-    
+
         this.setState({
-          classifier: tempClassifier,
+            classifier: tempClassifier,
         })
-    
+
         this.save(classId)
-      };
+    };
 
 
     _handleSubmit = async (e) => {
@@ -138,9 +138,9 @@ class Upload extends React.Component {
                 probability: ${result.confidences[result.label]}
               `;
 
-              this.setState({
-                  imgTensor : a,
-              })
+                this.setState({
+                    imgTensor: a,
+                })
             }
         }
     }
@@ -165,31 +165,36 @@ class Upload extends React.Component {
         let { imagePreviewUrl } = this.state;
         let $imagePreview = null;
         if (imagePreviewUrl) {
-            $imagePreview = (<img src={imagePreviewUrl} alt="preview" id="previewImg" />);
+            $imagePreview = (<img src={imagePreviewUrl} alt="preview" id="previewImg" style={{width:"100%", height:"100%", borderRadius:"10%"}} />);
         } else {
-            $imagePreview = (<div className="previewText">Please select an Image for Preview</div>);
+            $imagePreview = (<div className="previewText" style={{margin:"30% 20%"}}>Please select an Image for Preview</div>);
         }
 
         return (
-            <div className="previewComponent">
-                <form onSubmit={(e) => this._handleSubmit(e)}>
-                    <input className="fileInput"
-                        type="file"
-                        onChange={(e) => this._handleImageChange(e)} />
-                    <button className="submitButton"
-                        type="submit"
-                        onClick={(e) => this._handleSubmit(e)}>Upload Image</button>
-                </form>
-                <div className="imgPreview">
-                    {$imagePreview}
+            <div style={{ width: "25%", border: "5px solid #000", overflow: "hidden", borderRadius:"25px", backgroundColor:"#792da6" }}>
+                <div className="previewComponent" style={{ width: "50%", float: "left", marginRight:"5%" }}>
+                    <form onSubmit={(e) => this._handleSubmit(e)} style={{ width: "100%", padding: "1%" }}>
+                        <input className="fileInput"
+                            type="file"
+                            onChange={(e) => this._handleImageChange(e)}
+                            style={{ margin: "1% 5%" }} />
+                        <div className="imgPreview" style={{ minWidth:"200px", border:"3px solid #000", borderRadius:"25px", minHeight:"200px", margin:"5% 5%" }}>
+                            {$imagePreview}
+                        </div>
+                        <button className="submitButton"
+                            type="submit"
+                            style={{margin:"1% 5%"}}
+                            onClick={(e) => this._handleSubmit(e)}>Upload Image</button>
+                            
+                    </form>
                 </div>
-                <div id="console"></div>
+                <div style={{ width: "45%", overflow: "hidden" }}>
+                    <div id="console" style={{minHeight:"80px"}}></div>
 
-                <video autoPlay playsInline muted id="webcam" width="224" height="224"></video>
-                <button id="class-a" onClick={() => this.addExample(0)}>Add Coffee Arabica</button>
-                <button id="class-b" onClick={() => this.addExample(1)}>Add Parlour Palm</button>
-                <button id="class-c" onClick={() => this.addExample(2)}>Add Aloe Vera</button>
-
+                    <button id="class-a" onClick={() => this.addExample(0)} style={{ height: "50px", display: "block", margin: "5% 1%", width: "200px" }}>Add Coffee Arabica</button>
+                    <button id="class-b" onClick={() => this.addExample(1)} style={{ height: "50px", display: "block", margin: "5% 1%", width: "200px" }}>Add Parlour Palm</button>
+                    <button id="class-c" onClick={() => this.addExample(2)} style={{ height: "50px", display: "block", margin: "5% 1%", width: "200px" }}>Add Aloe Vera</button>
+                </div>
             </div>
         )
     }
