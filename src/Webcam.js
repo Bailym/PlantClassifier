@@ -1,6 +1,5 @@
 import React from 'react';
 import * as tf from '@tensorflow/tfjs';
-import Upload from './components/upload';
 const knnClassifier = require('@tensorflow-models/knn-classifier');
 const mobilenet = require('@tensorflow-models/mobilenet');
 const axios = require('axios');
@@ -46,6 +45,8 @@ class Webcam extends React.Component {
       if (this.state.classifier.getNumClasses() > 0) {
         //image from the webcam
         const img = await this.state.webcam.capture();
+
+        console.log(img)
 
         // Get the activation from mobilenet from the webcam.
         const activation = this.state.net.infer(img, 'conv_preds');
@@ -127,7 +128,6 @@ class Webcam extends React.Component {
             tensorObj[key] = tf.tensor(tensorObj[key], [tensorObj[key].length / 1024, 1024])
           })
           tempClassifier.setClassifierDataset(tensorObj);
-
         }
         catch (error) {
           console.log(error)
@@ -146,7 +146,6 @@ class Webcam extends React.Component {
   render = () => {
 
     return (
-      <div>
         <div>
           <video autoPlay playsInline muted id="webcam" width="224" height="224"></video>
           <button id="class-a" onClick={() => this.addExample(0)}>Add Coffee Arabica</button>
@@ -157,12 +156,6 @@ class Webcam extends React.Component {
 
           <div id="console"></div>
         </div>
-
-        <div>
-          <Upload/>
-        </div>
-
-      </div>
     )
   }
 
