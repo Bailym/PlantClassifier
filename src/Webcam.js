@@ -1,23 +1,30 @@
 import React from 'react';
 import * as tf from '@tensorflow/tfjs';
+import Upload from './components/upload';
 const knnClassifier = require('@tensorflow-models/knn-classifier');
 const mobilenet = require('@tensorflow-models/mobilenet');
 const axios = require('axios');
 
-class Home extends React.Component {
+class Webcam extends React.Component {
 
-  state = {
-    webcam: null,
-    net: null,
-    classifier: null,
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      webcam: null,
+      net: null,
+      classifier: null,
+    }
   }
+
+
 
   componentDidMount = async () => {
 
     // Load the mobilenet model
     var netInit = await mobilenet.load();
     var classifierInit = knnClassifier.create();
-    
+
 
     // Create an object from Tensorflow.js data API which could capture image 
     // from the web camera as Tensor.
@@ -28,11 +35,11 @@ class Home extends React.Component {
       webcam: webcamInit,
       net: netInit,
       classifier: classifierInit,
-      
+
     })
 
     this.load();
-    
+
 
     //Continuously read the webcam feed.
     while (true) {
@@ -58,8 +65,6 @@ class Home extends React.Component {
       }
       await tf.nextFrame();
     }
-
-
   }
 
   addExample = async (classId) => {
@@ -82,7 +87,7 @@ class Home extends React.Component {
       classifier: tempClassifier,
     })
     console.log(this.state);
-    
+
     this.save(classId)
     img.dispose();
   };
@@ -98,7 +103,7 @@ class Home extends React.Component {
     });
 
 
-    await axios.post('http://localhost:3001/api/updatemodel', { [classId]  : datasetObj[classId]})
+    await axios.post('http://localhost:80/api/updatemodel', { [classId]: datasetObj[classId] })
       .then(function (response) {
         console.log(response);
       })
@@ -113,7 +118,7 @@ class Home extends React.Component {
 
     var tempClassifier = this.state.classifier;
     //can be change to other source
-    await axios.get('http://localhost:3001/api/getmodel')
+    await axios.get('http://localhost:80/api/getmodel')
       .then(function (response) {
         try {
           let tensorObj = response.data
@@ -133,33 +138,34 @@ class Home extends React.Component {
         console.log(error);
       });
 
-      this.setState({
-        classifier: tempClassifier,
-      })
-
-
-
+    this.setState({
+      classifier: tempClassifier,
+    })
   }
 
   render = () => {
 
     return (
       <div>
-        <video autoPlay playsInline muted id="webcam" width="224" height="224"></video>
-        <button id="class-a" onClick={() => this.addExample(0)}>Add Coffee Arabica</button>
-        <button id="class-b" onClick={() => this.addExample(1)}>Add Parlour Palm</button>
-        <button id="class-c" onClick={() => this.addExample(2)}>Add Aloe Vera</button>
-        {/* <button id="class-d">Add Pikachu</button>
+        <div>
+          <video autoPlay playsInline muted id="webcam" width="224" height="224"></video>
+          <button id="class-a" onClick={() => this.addExample(0)}>Add Coffee Arabica</button>
+          <button id="class-b" onClick={() => this.addExample(1)}>Add Parlour Palm</button>
+          <button id="class-c" onClick={() => this.addExample(2)}>Add Aloe Vera</button>
+          {/* <button id="class-d">Add Pikachu</button>
         <button id="class-e">Add Sonic</button> */}
 
-        <div id="console">
-
-
+          <div id="console"></div>
         </div>
+
+        <div>
+          <Upload/>
+        </div>
+
       </div>
     )
   }
 
 }
 
-export default Home;
+export default Webcam;
