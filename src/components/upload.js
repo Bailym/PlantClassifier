@@ -12,6 +12,7 @@ class Upload extends React.Component {
             imagePreviewUrl: '',
             net: null,
             classifier: null,
+            imgTensor : null,
         };
     }
 
@@ -63,12 +64,55 @@ class Upload extends React.Component {
         })
     }
 
+    save = async (classId) => {
+        let dataset = this.state.classifier.getClassifierDataset()
+        var datasetObj = {}
+        Object.keys(dataset).forEach((key) => {
+          let data = dataset[key].dataSync();
+          // use Array.from() so when JSON.stringify() it covert to an array string e.g [0.1,-0.2...] 
+          // instead of object e.g {0:"0.1", 1:"-0.2"...}
+          datasetObj[key] = Array.from(data);
+        });
+    
+    
+        await axios.post('http://localhost:80/api/updatemodel', { [classId]: datasetObj[classId] })
+          .then(function (response) {
+            console.log(response);
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+    
+    
+      };
+
+    addExample = async (classId) => {
+
+        var tempClassifier = this.state.classifier;
+        // Capture an image from the web camera.
+        const img = await this.state.imgTensor
+    
+        // Get the intermediate activation of MobileNet 'conv_preds' and pass that
+        // to the KNN classifier.
+        const activation = this.state.net.infer(img, 'conv_preds');
+    
+        // Pass the intermediate activation to the classifier.
+        //Associate this activation function with the selected class
+        tempClassifier.addExample(activation, classId);
+    
+        // Dispose the tensor to release the memory.
+    
+        this.setState({
+          classifier: tempClassifier,
+        })
+    
+        this.save(classId)
+      };
+
 
     _handleSubmit = async (e) => {
 
         e.preventDefault();
-        // TODO: do something with -> this.state.file
-        console.log('handle uploading-', this.state.file);
 
         const im = new Image()
         var fr = new FileReader();
@@ -78,7 +122,6 @@ class Upload extends React.Component {
         fr.readAsDataURL(this.state.file);
         im.onload = async () => {
             const a = tf.browser.fromPixels(im)
-            console.log(a);
 
             if (this.state.classifier.getNumClasses() > 0) {
 
@@ -95,8 +138,9 @@ class Upload extends React.Component {
                 probability: ${result.confidences[result.label]}
               `;
 
-                // Dispose the tensor to release the memory.
-                a.dispose();
+              this.setState({
+                  imgTensor : a,
+              })
             }
         }
     }
@@ -140,6 +184,12 @@ class Upload extends React.Component {
                     {$imagePreview}
                 </div>
                 <div id="console"></div>
+
+                <video autoPlay playsInline muted id="webcam" width="224" height="224"></video>
+                <button id="class-a" onClick={() => this.addExample(0)}>Add Coffee Arabica</button>
+                <button id="class-b" onClick={() => this.addExample(1)}>Add Parlour Palm</button>
+                <button id="class-c" onClick={() => this.addExample(2)}>Add Aloe Vera</button>
+
             </div>
         )
     }
