@@ -45,9 +45,6 @@ class Webcam extends React.Component {
       if (this.state.classifier.getNumClasses() > 0) {
         //image from the webcam
         const img = await this.state.webcam.capture();
-
-        console.log(img)
-
         // Get the activation from mobilenet from the webcam.
         const activation = this.state.net.infer(img, 'conv_preds');
         // Get the most likely class and confidence from the classifier module.

@@ -1,8 +1,11 @@
 import React from 'react';
 import * as tf from '@tensorflow/tfjs';
+import Button from '@material-ui/core/Button';
+import ReactDOM from "react-dom";
 const knnClassifier = require('@tensorflow-models/knn-classifier');
 const mobilenet = require('@tensorflow-models/mobilenet');
 const axios = require('axios');
+var classNames = require("../classes.json")
 
 class Upload extends React.Component {
     constructor(props) {
@@ -34,6 +37,19 @@ class Upload extends React.Component {
         })
 
         this.load();
+
+        //map the classnames.json to a list of buttons and render them
+        var buttons = classNames.map(x => <button key={x.ClassID} className="addLabelButton" onClick={() => this.addExample(x.ClassID)} style={{ height: "50px", display: "inline", margin: "2% 0", width: "100%" }}>{"Label " + x.Name}</button>);
+        ReactDOM.render(buttons, document.getElementById("labelButtonsDiv"));
+
+        //disable buttons 
+        document.getElementById("classifyButton").disabled = true;
+        var addLabelButtons = document.getElementsByClassName("addLabelButton");
+
+        //disable each add label button
+        for (var i = 0; i < addLabelButtons.length; i++) {
+            addLabelButtons[i].disabled = true;
+        }
     }
 
     load = async () => {
@@ -62,6 +78,8 @@ class Upload extends React.Component {
         this.setState({
             classifier: tempClassifier,
         })
+
+        console.log("Model loaded!")
     }
 
     save = async (classId) => {
@@ -77,9 +95,10 @@ class Upload extends React.Component {
 
         await axios.post('http://localhost:80/api/updatemodel', { [classId]: datasetObj[classId] })
             .then(function (response) {
-                console.log(response);
+                console.log("Model saved");
             })
             .catch(function (error) {
+                console.log("Could not save model...")
                 console.log(error);
             });
 
@@ -110,6 +129,7 @@ class Upload extends React.Component {
     };
 
 
+    //Makes the prediction
     _handleSubmit = async (e) => {
 
         e.preventDefault();
@@ -141,6 +161,12 @@ class Upload extends React.Component {
                 this.setState({
                     imgTensor: a,
                 })
+
+                var addLabelButtons = document.getElementsByClassName("addLabelButton")
+                //enable each add label button
+                for (var i = 0; i < addLabelButtons.length; i++) {
+                    addLabelButtons[i].disabled = false;
+                }
             }
         }
     }
@@ -159,41 +185,45 @@ class Upload extends React.Component {
         }
 
         reader.readAsDataURL(file)
+
+        document.getElementById("classifyButton").disabled = false;
     }
 
     render() {
         let { imagePreviewUrl } = this.state;
         let $imagePreview = null;
         if (imagePreviewUrl) {
-            $imagePreview = (<img src={imagePreviewUrl} alt="preview" id="previewImg" style={{width:"100%", height:"100%", borderRadius:"10%"}} />);
+            $imagePreview = (<img src={imagePreviewUrl} alt="preview" id="previewImg" style={{ width: "100%", height: "auto", border: "3px solid #000" }} />);
         } else {
-            $imagePreview = (<div className="previewText" style={{margin:"30% 20%"}}>Please select an Image for Preview</div>);
+            $imagePreview = (<div className="previewText" style={{ margin: "30% 30%" }}>Please select an Image for Preview</div>);
         }
 
         return (
-            <div style={{ width: "25%", border: "5px solid #000", overflow: "hidden", borderRadius:"25px", backgroundColor:"#792da6" }}>
-                <div className="previewComponent" style={{ width: "50%", float: "left", marginRight:"5%" }}>
-                    <form onSubmit={(e) => this._handleSubmit(e)} style={{ width: "100%", padding: "1%" }}>
+            <div style={{ width: "50%", backgroundColor: "#e3e8e5", margin: "auto" }}>
+                <div className="previewComponent" style={{ width: "50%", margin: "auto" }}>
+                    <form style={{ width: "100%", padding: "1%" }}>
+                        <h1>Upload an Image</h1>
+                        <div className="imgPreview" style={{ border: "3px solid #000" }}>
+                            {$imagePreview}
+                        </div>
                         <input className="fileInput"
                             type="file"
                             onChange={(e) => this._handleImageChange(e)}
-                            style={{ margin: "1% 5%" }} />
-                        <div className="imgPreview" style={{ minWidth:"200px", border:"3px solid #000", borderRadius:"25px", minHeight:"200px", margin:"5% 5%" }}>
-                            {$imagePreview}
-                        </div>
+                            style={{ margin: "1% 0 1% 0" }} />
+                        <hr />
+                        <h1>Classify the Image</h1>
                         <button className="submitButton"
+                            id="classifyButton"
                             type="submit"
-                            style={{margin:"1% 5%"}}
-                            onClick={(e) => this._handleSubmit(e)}>Upload Image</button>
-                            
+                            style={{ margin: "1% auto", width: "100%", height: "30px" }}
+                            onClick={(e) => this._handleSubmit(e)}>Classify Image</button>
                     </form>
-                </div>
-                <div style={{ width: "45%", overflow: "hidden" }}>
-                    <div id="console" style={{minHeight:"80px"}}></div>
+                    <div id="console" style={{ wdith:"100%", margin:"auto" }}></div>
+                    <hr />
+                    <h1>Label the Image</h1>
+                    <div id="labelButtonsDiv" style={{maxHeight:"200px", overflow:"auto"}}>
 
-                    <button id="class-a" onClick={() => this.addExample(0)} style={{ height: "50px", display: "block", margin: "5% 1%", width: "200px" }}>Add Coffee Arabica</button>
-                    <button id="class-b" onClick={() => this.addExample(1)} style={{ height: "50px", display: "block", margin: "5% 1%", width: "200px" }}>Add Parlour Palm</button>
-                    <button id="class-c" onClick={() => this.addExample(2)} style={{ height: "50px", display: "block", margin: "5% 1%", width: "200px" }}>Add Aloe Vera</button>
+                    </div>
                 </div>
             </div>
         )
