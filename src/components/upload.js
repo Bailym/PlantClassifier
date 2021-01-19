@@ -1,3 +1,4 @@
+/* eslint-disable no-loop-func */
 import React from 'react';
 import * as tf from '@tensorflow/tfjs';
 import Button from '@material-ui/core/Button';
@@ -11,11 +12,13 @@ class Upload extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            file: '',
+            files: [],
             imagePreviewUrl: '',
             net: null,
             classifier: null,
-            imgTensor: null,
+            imgTensors: [],
+            allResults: [],
+            consoleComponents: []
         };
     }
 
@@ -130,90 +133,114 @@ class Upload extends React.Component {
         this.save(classId)
     };
 
-
     //Makes the prediction
     _handleSubmit = async (e) => {
 
         e.preventDefault();
 
-        const im = new Image()
-        var fr = new FileReader();
-        fr.onload = function () {
-            im.src = fr.result;
-        }
-        fr.readAsDataURL(this.state.file);
-        im.onload = async () => {
-            const a = tf.browser.fromPixels(im)
+        for (var i = 0; i < this.state.files.length; i++) {
+            let fr = new FileReader();
+            let im = new Image()
 
-            if (this.state.classifier.getNumClasses() > 0) {
+            fr.onload = async () => {
+                im.src = fr.result;
+            }
 
-                // Get the activation from mobilenet from the uploaded image.
-                const activation = this.state.net.infer(a, 'conv_preds');
-                // Get the most likely class and confidence from the classifier module.
-                const result = await this.state.classifier.predictClass(activation);
+            im.onload = async () => {
+                let activation = [];
+                let result = [];
+                let label = "";
+                let confidences = [];
+                let confidenceValues = [];
+                let addLabelButtons = []
+                let existingConsoleComponents = this.state.consoleComponents
+                let existingResults = this.state.allResults
+                let existingTensors = this.state.imgTensors
 
-                let label = ""; //the label (name) of the plant 
-                let confidences = [];   //a list of confidences and assosciated class ids and names
-                let confidenceValues = Object.values(result.confidences)    //the raw confidences supplied by the model
+                var a = tf.browser.fromPixels(im)
+
+                if (this.state.classifier.getNumClasses() > 0) {
+                    // Get the activation from mobilenet from the uploaded image.
+                    activation = this.state.net.infer(a, 'conv_preds');
+                    // Get the most likely class and confidence from the classifier module.
+                    result = await this.state.classifier.predictClass(activation);
+
+                    label = ""; //the label (name) of the plant 
+                    confidences = [];   //a list of confidences and assosciated class ids and names
+                    confidenceValues = Object.values(result.confidences)    //the raw confidences supplied by the model
 
 
-                //create a list of confidences with names and ids
-                for (var i = 0; i < confidenceValues.length; i++) {
-                    for (var j = 0; j < classNames.length; j++) {
-                        if (classNames[j].ClassID === i) {
-                            label = classNames[j].Name;
+                    //create a list of confidences with names and ids
+                    for (let i = 0; i < confidenceValues.length; i++) {
+                        for (var j = 0; j < classNames.length; j++) {
+                            if (classNames[j].ClassID === i) {
+                                label = classNames[j].Name;
+                            }
                         }
+
+                        confidences.push({ "ClassID": i, "Name": label, "Confidence": confidenceValues[i] * 100 })
                     }
 
-                    confidences.push({ "ClassID": i, "Name": label, "Confidence": confidenceValues[i]*100 })
+                    //sort this this in desc by confidence
+                    confidences.sort(function (a, b) {
+                        var keyA = a.Confidence,
+                            keyB = b.Confidence;
+                        // Compare the 2 dates
+                        if (keyA < keyB) return 1;
+                        if (keyA > keyB) return -1;
+                        return 0;
+                    });
+
+
+                    existingConsoleComponents.push(<p>File {1}</p>)
+                    //create a component for each confidence value
+                    for (let i = 0; i < confidences.length; i++) {
+                        existingConsoleComponents.push(<p key={i}>{confidences[i].Name} : {confidences[i].Confidence + "%"}</p>)
+                    }
+                    existingResults.push(confidences);
+                    existingTensors.push(a)
+                    addLabelButtons = document.getElementsByClassName("addLabelButton")
+                    //enable each add label button
+                    for (let i = 0; i < addLabelButtons.length; i++) {
+                        addLabelButtons[i].disabled = false;
+                    }
                 }
 
-                //sort this this in desc by confidence
-                confidences.sort(function (a, b) {
-                    var keyA = a.Confidence,
-                        keyB = b.Confidence;
-                    // Compare the 2 dates
-                    if (keyA < keyB) return 1;
-                    if (keyA > keyB) return -1;
-                    return 0;
-                });
-
-                //create a component for each confidence value
-                let confidenceComponents = [];
-                for (let i = 0; i < confidences.length; i++) {
-                    confidenceComponents.push(<p key={i}>{confidences[i].Name} : {confidences[i].Confidence + "%"}</p>)
-                }
-
-                //render the components
-                ReactDOM.render(confidenceComponents, document.getElementById("console"))
-
-                this.setState({
-                    imgTensor: a,
+                this.setState ({
+                    imgTensors: existingTensors,
+                    allResults: existingResults,
+                    consoleComponents: existingConsoleComponents
                 })
-
-                var addLabelButtons = document.getElementsByClassName("addLabelButton")
-                //enable each add label button
-                for (let i = 0; i < addLabelButtons.length; i++) {
-                    addLabelButtons[i].disabled = false;
-                }
             }
+            fr.readAsDataURL(this.state.files[i]);
         }
+
+        console.log(this.state)
+        
+
     }
 
-    _handleImageChange(e) {
+    //Upload image and store images
+    _handleImageChange = async (e) => {
         e.preventDefault();
+        let file = []
+        let newFiles = []
 
-        let reader = new FileReader();
-        let file = e.target.files[0];
+        for (let i = 0; i < e.target.files.length; i++) {
+            let reader = new FileReader();
 
-        reader.onloadend = () => {
-            this.setState({
-                file: file,
-                imagePreviewUrl: reader.result
-            });
+            reader.onloadend = () => {
+                this.setState({
+                    files: newFiles,
+                    imagePreviewUrl: reader.result
+                });
+            }
+
+            file = e.target.files[i]
+            newFiles.push(file);
+            reader.readAsDataURL(file)
         }
 
-        reader.readAsDataURL(file)
 
         document.getElementById("classifyButton").disabled = false;
     }
@@ -238,7 +265,8 @@ class Upload extends React.Component {
                         <input className="fileInput"
                             type="file"
                             onChange={(e) => this._handleImageChange(e)}
-                            style={{ margin: "1% 0 1% 0" }} />
+                            style={{ margin: "1% 0 1% 0" }}
+                            multiple />
                         <hr />
                         <h1>Classify the Image</h1>
                         <button className="submitButton"
@@ -247,7 +275,7 @@ class Upload extends React.Component {
                             style={{ margin: "1% auto", width: "100%", height: "30px" }}
                             onClick={(e) => this._handleSubmit(e)}>Classify Image</button>
                     </form>
-                    <div id="console" style={{ width: "100%", margin: "auto", maxHeight:"100px", overflow:"auto" }}></div>
+                    <div id="console" style={{ width: "100%", margin: "auto", maxHeight: "100px", overflow: "auto" }}></div>
                     <hr />
                     <h1>Label the Image</h1>
                     <div id="labelButtonsDiv" style={{ maxHeight: "200px", overflow: "auto" }}>
