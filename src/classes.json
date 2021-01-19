@@ -10,5 +10,9 @@
     {
         "ClassID": 2,
         "Name": "Aloe Vera"    
+    },
+    {
+        "ClassID": 3,
+        "Name": "Common Ninebark"    
     }
 ]

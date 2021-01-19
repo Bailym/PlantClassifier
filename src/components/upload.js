@@ -19,6 +19,8 @@ class Upload extends React.Component {
         };
     }
 
+
+
     componentDidMount = async () => {
 
         // Load the mobilenet model
@@ -51,6 +53,8 @@ class Upload extends React.Component {
             addLabelButtons[i].disabled = true;
         }
     }
+
+
 
     load = async () => {
 
@@ -108,7 +112,7 @@ class Upload extends React.Component {
     addExample = async (classId) => {
 
         var tempClassifier = this.state.classifier;
-        // Capture an image from the web camera.
+        // load the uploaded image.
         const img = await this.state.imgTensor
 
         // Get the intermediate activation of MobileNet 'conv_preds' and pass that
@@ -118,8 +122,6 @@ class Upload extends React.Component {
         // Pass the intermediate activation to the classifier.
         //Associate this activation function with the selected class
         tempClassifier.addExample(activation, classId);
-
-        // Dispose the tensor to release the memory.
 
         this.setState({
             classifier: tempClassifier,
@@ -150,13 +152,40 @@ class Upload extends React.Component {
                 // Get the most likely class and confidence from the classifier module.
                 const result = await this.state.classifier.predictClass(activation);
 
-                const classes = ['Coffee Arabica', 'Parlour Palm', 'Aloe Vera'];
+                let label = ""; //the label (name) of the plant 
+                let confidences = [];   //a list of confidences and assosciated class ids and names
+                let confidenceValues = Object.values(result.confidences)    //the raw confidences supplied by the model
 
-                //update the front end with the prediction
-                document.getElementById('console').innerText = `
-                prediction: ${classes[result.label]}\n
-                probability: ${result.confidences[result.label]}
-              `;
+
+                //create a list of confidences with names and ids
+                for (var i = 0; i < confidenceValues.length; i++) {
+                    for (var j = 0; j < classNames.length; j++) {
+                        if (classNames[j].ClassID === i) {
+                            label = classNames[j].Name;
+                        }
+                    }
+
+                    confidences.push({ "ClassID": i, "Name": label, "Confidence": confidenceValues[i]*100 })
+                }
+
+                //sort this this in desc by confidence
+                confidences.sort(function (a, b) {
+                    var keyA = a.Confidence,
+                        keyB = b.Confidence;
+                    // Compare the 2 dates
+                    if (keyA < keyB) return 1;
+                    if (keyA > keyB) return -1;
+                    return 0;
+                });
+
+                //create a component for each confidence value
+                let confidenceComponents = [];
+                for (let i = 0; i < confidences.length; i++) {
+                    confidenceComponents.push(<p key={i}>{confidences[i].Name} : {confidences[i].Confidence + "%"}</p>)
+                }
+
+                //render the components
+                ReactDOM.render(confidenceComponents, document.getElementById("console"))
 
                 this.setState({
                     imgTensor: a,
@@ -164,7 +193,7 @@ class Upload extends React.Component {
 
                 var addLabelButtons = document.getElementsByClassName("addLabelButton")
                 //enable each add label button
-                for (var i = 0; i < addLabelButtons.length; i++) {
+                for (let i = 0; i < addLabelButtons.length; i++) {
                     addLabelButtons[i].disabled = false;
                 }
             }
@@ -218,10 +247,10 @@ class Upload extends React.Component {
                             style={{ margin: "1% auto", width: "100%", height: "30px" }}
                             onClick={(e) => this._handleSubmit(e)}>Classify Image</button>
                     </form>
-                    <div id="console" style={{ wdith:"100%", margin:"auto" }}></div>
+                    <div id="console" style={{ width: "100%", margin: "auto", maxHeight:"100px", overflow:"auto" }}></div>
                     <hr />
                     <h1>Label the Image</h1>
-                    <div id="labelButtonsDiv" style={{maxHeight:"200px", overflow:"auto"}}>
+                    <div id="labelButtonsDiv" style={{ maxHeight: "200px", overflow: "auto" }}>
 
                     </div>
                 </div>
