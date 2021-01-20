@@ -149,6 +149,7 @@ class Upload extends React.Component {
             //create keys for key details readability
             confidences.details = []
             confidences["File Name"] = img.id;
+            confidences.tensor = a;
 
             //create a list of confidences with names and ids
             for (let i = 0; i < modelPredictions.length; i++) {
@@ -211,11 +212,35 @@ class Upload extends React.Component {
 
             //runs each time an image is loaded
             im.onload = async () => {
-                console.log(await this.classifyImage(im))
+                this.addResultsToState(await this.classifyImage(im))
+            }
+        }      
+    }
+
+    //adds the results of classifyImage to the component state and generates console components
+    addResultsToState = (result) => {
+
+        let savedResults = this.state.allResults;  //the current results in the state
+        savedResults.push(result)   //add the new result
+
+        let newComponents = []  //holds UI components
+
+        //generate the components
+        for (var i = 0; i < savedResults.length; i++) {
+            newComponents.push(<hr key={savedResults[i]["File Name"] + "HR" }/>)
+            newComponents.push(<p key={savedResults[i]["File Name"]}><b>{savedResults[i]["File Name"]}</b></p>)
+            for (var j = 0; j < savedResults[i].details.length; j++) {
+                newComponents.push(<p key={savedResults[i]["File Name"] + savedResults[i].details[j].ClassID}>{savedResults[i].details[j].Name + " : " + savedResults[i].details[j].Confidence}</p>)
             }
         }
 
+        //update state, rendering the components
+        this.setState({
+            allResults: savedResults,
+            consoleComponents: newComponents
+        });
 
+        console.log(savedResults)
     }
 
     //Upload image and store images
@@ -298,7 +323,9 @@ class Upload extends React.Component {
                             style={{ margin: "1% auto", width: "100%", height: "30px" }}
                             onClick={(e) => this._handleSubmit(e)}>Classify Image</button>
                     </form>
-                    <div id="console" style={{ width: "100%", margin: "auto", maxHeight: "100px", overflow: "auto" }}></div>
+                    <div id="console" style={{ width: "100%", margin: "auto", maxHeight: "500px", overflow: "auto" }}>
+                        {this.state.consoleComponents}
+                    </div>
                     <hr />
                     <h1>Label the Image</h1>
                     <div id="labelButtonsDiv" style={{ maxHeight: "200px", overflow: "auto" }}>
