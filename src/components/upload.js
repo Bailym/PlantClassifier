@@ -146,6 +146,10 @@ class Upload extends React.Component {
             let confidences = [];   //a list of confidences and assosciated class ids and names
             let modelPredictions = Object.values(result.confidences)    //the raw confidences supplied by the model
 
+            //create keys for key details readability
+            confidences.details = []
+            confidences["File Name"] = img.id;
+
             //create a list of confidences with names and ids
             for (let i = 0; i < modelPredictions.length; i++) {
                 //iterate through the list of classes
@@ -156,19 +160,23 @@ class Upload extends React.Component {
                     }
                 }
 
-                confidences.push({ "ClassID": i, "Name": label, "Confidence": modelPredictions[i] * 100 })
+                //add the full details
+                confidences.details.push({ "ClassID": i, "Name": label, "Confidence": modelPredictions[i] * 100 })
+
+                //sort details in desc order by confidence
+                confidences.details.sort(function (a, b) {
+                    var keyA = a.Confidence,
+                        keyB = b.Confidence;
+                    // Compare the 2 dates
+                    if (keyA < keyB) return 1;
+                    if (keyA > keyB) return -1;
+                    return 0;
+                });
+
+                //add the important details as keys
+                confidences["Prediction"] = confidences.details[0].Name
+                confidences["Confidence"] = confidences.details[0].Confidence
             }
-
-            //sort this this in desc order by confidence
-            confidences.sort(function (a, b) {
-                var keyA = a.Confidence,
-                    keyB = b.Confidence;
-                // Compare the 2 dates
-                if (keyA < keyB) return 1;
-                if (keyA > keyB) return -1;
-                return 0;
-            });
-
 
             let addLabelButtons = document.getElementsByClassName("addLabelButton")
             //enable each add label button
@@ -188,20 +196,24 @@ class Upload extends React.Component {
 
         e.preventDefault();
 
-        console.log(this.state)
+        let loadedFiles = this.state.files; //the files in the state
 
-        for (var i = 0; i < this.state.imageURLs.length; i++) {
-            let im = new Image()
-            im.src = this.state.imageURLs[i]
+        //assign the URLS to each file object
+        for (var i = 0; i < loadedFiles.length; i++) {
+            loadedFiles[i].imagePreviewUrl = this.state.imageURLs[i]
+        }
 
+        //classify each file
+        for (var i = 0; i < this.state.files.length; i++) {
+            let im = new Image()    //create an Image
+            im.src = this.state.files[i].imagePreviewUrl    //update the image source
+            im.id = this.state.files[i].name    //update the image name
 
+            //runs each time an image is loaded
             im.onload = async () => {
                 console.log(await this.classifyImage(im))
-            }  //end of onload */
-
-            //fr.readAsDataURL(this.state.files[i]);
-
-        } //end of for loop
+            }
+        }
 
 
     }
@@ -209,6 +221,7 @@ class Upload extends React.Component {
     //Upload image and store images
     _handleImageChange = async (e) => {
 
+        //reset saved files and URLS
         this.setState({
             files: [],
             imageURLs: [],
@@ -217,19 +230,23 @@ class Upload extends React.Component {
             consoleComponents: []
         })
         e.preventDefault();
-        let file = []
-        let newFiles = []
+
+        let file = []   //the current file
+        let newFiles = []   //a list of files
 
         for (let i = 0; i < e.target.files.length; i++) {
+
             let reader = new FileReader();
 
+            //called after file is read
             reader.onloadend = () => {
                 this.addImagetoState(newFiles, reader.result)
             }
 
-            file = e.target.files[i]
-            newFiles.push(file);
-            reader.readAsDataURL(file)
+            file = e.target.files[i]    //each file
+
+            newFiles.push(file);    //add each file to a list
+            reader.readAsDataURL(file)  //read the file
         }
 
 
@@ -237,6 +254,7 @@ class Upload extends React.Component {
 
     }
 
+    //adds a list of files and a url from the file reader to the state
     addImagetoState = (files, URL) => {
 
         let savedURLs = this.state.imageURLs;
