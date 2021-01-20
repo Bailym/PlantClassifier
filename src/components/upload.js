@@ -13,7 +13,7 @@ class Upload extends React.Component {
         super(props);
         this.state = {
             files: [],
-            imagePreviewUrl: '',
+            imageURLs: [],
             net: null,
             classifier: null,
             imgTensors: [],
@@ -133,95 +133,89 @@ class Upload extends React.Component {
         this.save(classId)
     };
 
-    //Makes the prediction
-    _handleSubmit = async (e) => {
+    classifyImage = async (img) => {
 
-        e.preventDefault();
+        var a = tf.browser.fromPixels(img)
+        if (this.state.classifier.getNumClasses() > 0) {
+            // Get the activation from mobilenet from the uploaded image.
+            let activation = this.state.net.infer(a, 'conv_preds');
+            // Get the most likely class and confidence from the classifier module.
+            let result = await this.state.classifier.predictClass(activation);
 
-        for (var i = 0; i < this.state.files.length; i++) {
-            let fr = new FileReader();
-            let im = new Image()
+            let label = ""; //the label (name) of the plant 
+            let confidences = [];   //a list of confidences and assosciated class ids and names
+            let modelPredictions = Object.values(result.confidences)    //the raw confidences supplied by the model
 
-            fr.onload = async () => {
-                im.src = fr.result;
-            }
-
-            im.onload = async () => {
-                let activation = [];
-                let result = [];
-                let label = "";
-                let confidences = [];
-                let confidenceValues = [];
-                let addLabelButtons = []
-                let existingConsoleComponents = this.state.consoleComponents
-                let existingResults = this.state.allResults
-                let existingTensors = this.state.imgTensors
-
-                var a = tf.browser.fromPixels(im)
-
-                if (this.state.classifier.getNumClasses() > 0) {
-                    // Get the activation from mobilenet from the uploaded image.
-                    activation = this.state.net.infer(a, 'conv_preds');
-                    // Get the most likely class and confidence from the classifier module.
-                    result = await this.state.classifier.predictClass(activation);
-
-                    label = ""; //the label (name) of the plant 
-                    confidences = [];   //a list of confidences and assosciated class ids and names
-                    confidenceValues = Object.values(result.confidences)    //the raw confidences supplied by the model
-
-
-                    //create a list of confidences with names and ids
-                    for (let i = 0; i < confidenceValues.length; i++) {
-                        for (var j = 0; j < classNames.length; j++) {
-                            if (classNames[j].ClassID === i) {
-                                label = classNames[j].Name;
-                            }
-                        }
-
-                        confidences.push({ "ClassID": i, "Name": label, "Confidence": confidenceValues[i] * 100 })
-                    }
-
-                    //sort this this in desc by confidence
-                    confidences.sort(function (a, b) {
-                        var keyA = a.Confidence,
-                            keyB = b.Confidence;
-                        // Compare the 2 dates
-                        if (keyA < keyB) return 1;
-                        if (keyA > keyB) return -1;
-                        return 0;
-                    });
-
-
-                    existingConsoleComponents.push(<p>File {1}</p>)
-                    //create a component for each confidence value
-                    for (let i = 0; i < confidences.length; i++) {
-                        existingConsoleComponents.push(<p key={i}>{confidences[i].Name} : {confidences[i].Confidence + "%"}</p>)
-                    }
-                    existingResults.push(confidences);
-                    existingTensors.push(a)
-                    addLabelButtons = document.getElementsByClassName("addLabelButton")
-                    //enable each add label button
-                    for (let i = 0; i < addLabelButtons.length; i++) {
-                        addLabelButtons[i].disabled = false;
+            //create a list of confidences with names and ids
+            for (let i = 0; i < modelPredictions.length; i++) {
+                //iterate through the list of classes
+                for (var j = 0; j < classNames.length; j++) {
+                    //match each class ID to a plant name (string)
+                    if (classNames[j].ClassID === i) {
+                        label = classNames[j].Name;
                     }
                 }
 
-                this.setState ({
-                    imgTensors: existingTensors,
-                    allResults: existingResults,
-                    consoleComponents: existingConsoleComponents
-                })
+                confidences.push({ "ClassID": i, "Name": label, "Confidence": modelPredictions[i] * 100 })
             }
-            fr.readAsDataURL(this.state.files[i]);
+
+            //sort this this in desc order by confidence
+            confidences.sort(function (a, b) {
+                var keyA = a.Confidence,
+                    keyB = b.Confidence;
+                // Compare the 2 dates
+                if (keyA < keyB) return 1;
+                if (keyA > keyB) return -1;
+                return 0;
+            });
+
+
+            let addLabelButtons = document.getElementsByClassName("addLabelButton")
+            //enable each add label button
+            for (let i = 0; i < addLabelButtons.length; i++) {
+                addLabelButtons[i].disabled = false;
+            }
+
+            //ReactDOM.render(this.state.consoleComponents, document.getElementById("console"))
+            return (confidences);
         }
+    }
+
+
+
+    //Makes the prediction
+    _handleSubmit = (e) => {
+
+        e.preventDefault();
 
         console.log(this.state)
-        
+
+        for (var i = 0; i < this.state.imageURLs.length; i++) {
+            let im = new Image()
+            im.src = this.state.imageURLs[i]
+
+
+            im.onload = async () => {
+                console.log(await this.classifyImage(im))
+            }  //end of onload */
+
+            //fr.readAsDataURL(this.state.files[i]);
+
+        } //end of for loop
+
 
     }
 
     //Upload image and store images
     _handleImageChange = async (e) => {
+
+        this.setState({
+            files: [],
+            imageURLs: [],
+            imgTensors: [],
+            allResults: [],
+            consoleComponents: []
+        })
         e.preventDefault();
         let file = []
         let newFiles = []
@@ -230,10 +224,7 @@ class Upload extends React.Component {
             let reader = new FileReader();
 
             reader.onloadend = () => {
-                this.setState({
-                    files: newFiles,
-                    imagePreviewUrl: reader.result
-                });
+                this.addImagetoState(newFiles, reader.result)
             }
 
             file = e.target.files[i]
@@ -243,6 +234,20 @@ class Upload extends React.Component {
 
 
         document.getElementById("classifyButton").disabled = false;
+
+    }
+
+    addImagetoState = (files, URL) => {
+
+        let savedURLs = this.state.imageURLs;
+        savedURLs.push(URL)
+        this.setState({
+            files: files,
+            imageURLs: savedURLs,
+            imagePreviewUrl: URL
+        });
+
+
     }
 
     render() {
