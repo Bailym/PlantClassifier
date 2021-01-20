@@ -1,18 +1,26 @@
 [
     {
         "ClassID": 0,
-        "Name": "Coffee Arabica"    
+        "Name": "Coffee Arabica"
     },
     {
         "ClassID": 1,
-        "Name": "Parlor Palm"    
+        "Name": "Parlor Palm"
     },
     {
         "ClassID": 2,
-        "Name": "Aloe Vera"    
+        "Name": "Aloe Vera"
     },
     {
         "ClassID": 3,
-        "Name": "Common Ninebark"    
+        "Name": "Common Ninebark"
+    },
+    {
+        "ClassID": 4,
+        "Name": "Song of India"
+    },
+    {
+        "ClassID": 5,
+        "Name": "Welsh Onion"
     }
 ]

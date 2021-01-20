@@ -114,17 +114,23 @@ class Upload extends React.Component {
 
     addExample = async (classId) => {
 
+        console.log(this.state.allResults)
+        let classifyResults = this.state.allResults;
         var tempClassifier = this.state.classifier;
+
+
         // load the uploaded image.
-        const img = await this.state.imgTensor
+        for (let i = 0; i < classifyResults.length; i++) {
+            let img = await classifyResults[i].tensor
 
-        // Get the intermediate activation of MobileNet 'conv_preds' and pass that
-        // to the KNN classifier.
-        const activation = this.state.net.infer(img, 'conv_preds');
+            // Get the intermediate activation of MobileNet 'conv_preds' and pass that
+            // to the KNN classifier.
+            let activation = this.state.net.infer(img, 'conv_preds');
 
-        // Pass the intermediate activation to the classifier.
-        //Associate this activation function with the selected class
-        tempClassifier.addExample(activation, classId);
+            // Pass the intermediate activation to the classifier.
+            //Associate this activation function with the selected class
+            tempClassifier.addExample(activation, classId);
+        }
 
         this.setState({
             classifier: tempClassifier,
@@ -142,7 +148,7 @@ class Upload extends React.Component {
             // Get the most likely class and confidence from the classifier module.
             let result = await this.state.classifier.predictClass(activation);
 
-            let label = ""; //the label (name) of the plant 
+            let label = ""; //the label (name) of the plant
             let confidences = [];   //a list of confidences and assosciated class ids and names
             let modelPredictions = Object.values(result.confidences)    //the raw confidences supplied by the model
 
@@ -197,6 +203,12 @@ class Upload extends React.Component {
 
         e.preventDefault();
 
+        //reset old results an components
+        this.setState({
+            allResults: [],
+            consoleComponents: []
+        });
+
         let loadedFiles = this.state.files; //the files in the state
 
         //assign the URLS to each file object
@@ -214,7 +226,7 @@ class Upload extends React.Component {
             im.onload = async () => {
                 this.addResultsToState(await this.classifyImage(im))
             }
-        }      
+        }
     }
 
     //adds the results of classifyImage to the component state and generates console components
@@ -227,7 +239,7 @@ class Upload extends React.Component {
 
         //generate the components
         for (var i = 0; i < savedResults.length; i++) {
-            newComponents.push(<hr key={savedResults[i]["File Name"] + "HR" }/>)
+            newComponents.push(<hr key={savedResults[i]["File Name"] + "HR"} />)
             newComponents.push(<p key={savedResults[i]["File Name"]}><b>{savedResults[i]["File Name"]}</b></p>)
             for (var j = 0; j < savedResults[i].details.length; j++) {
                 newComponents.push(<p key={savedResults[i]["File Name"] + savedResults[i].details[j].ClassID}>{savedResults[i].details[j].Name + " : " + savedResults[i].details[j].Confidence}</p>)
