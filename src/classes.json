@@ -22,5 +22,13 @@
     {
         "ClassID": 5,
         "Name": "Welsh Onion"
+    },
+    {
+        "ClassID": 6,
+        "Name": "Scarlet Hedgehog Cactus"
+    },
+    {
+        "ClassID": 7,
+        "Name": "Spineless Yucca"
     }
 ]
