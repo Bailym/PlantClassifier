@@ -38,5 +38,9 @@
     {
         "ClassID": 9,
         "Name": "Common Dandelion"
+    },
+    {
+        "ClassID": 10,
+        "Name": "Monkshood"
     }
 ]
