@@ -42,5 +42,9 @@
     {
         "ClassID": 10,
         "Name": "Monkshood"
+    },
+    {
+        "ClassID": 11,
+        "Name": "Formosan Juniper"
     }
 ]
