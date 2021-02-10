@@ -50,5 +50,9 @@
     {
         "ClassID": 12,
         "Name": "Calla Lily"
+    },
+    {
+        "ClassID": 13,
+        "Name": "Sweet Basil"
     }
 ]
