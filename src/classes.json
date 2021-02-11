@@ -62,5 +62,9 @@
     {
         "ClassID": 15,
         "Name": "English Lavender"
+    },
+    {
+        "ClassID": 16,
+        "Name": "Lucky Bamboo"
     }
 ]
