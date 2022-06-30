@@ -22,6 +22,7 @@
     "write-json-file": "^4.3.0"
   },
   "scripts": {
+    "prestart": "nvm use 14.19.3",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
