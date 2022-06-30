@@ -1,68 +1,30 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Plant Classifier
 
-## Available Scripts
+**MobileNET image classifier to be used with PlantCareApp**
 
-In the project directory, you can run:
+**Key Details**
+- React front end
+- Node + express server
+- JSON Classifier
+- Tensorflow JS MobileNET pre trained model.
+- Uses transfer learning to build on top of MobileNET model
 
-### `yarn start`
+**Features**
+- Uploading images
+- Getting predictions from the model
+- Use labels to train the model if it doesnt classify correctly (supervised learning)
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+**Screenshots**
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+Home page (this didnt need to look fancy, just a dev tool.
+![home](https://github.com/Bailym/PlantClassifier/blob/master/images/Home.png?raw=true)
 
-### `yarn test`
+Upload an image to be classified
+![image](https://github.com/Bailym/PlantClassifier/blob/master/images/Upload.png?raw=true)
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+See the initial prediction (percentage of certainty)
 
-### `yarn build`
+![classify](https://user-images.githubusercontent.com/44368942/176790193-aacad5ee-875e-4f6e-87be-d8ad0e7b3d68.png)
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+If not 100% certainty, provide a label so the model can learn from this image. This will update the model with the new weighting.
+![label](https://user-images.githubusercontent.com/44368942/176790285-1fb2ceac-8d21-4855-b593-edb108b075ce.png)
