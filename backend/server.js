@@ -3,10 +3,8 @@ const app = express();
 const axios = require("axios");
 var https = require('follow-redirects').https;
 var fs = require('fs');
-var cors = require('cors')
 const bodyParser = require('body-parser');
 
-app.use(cors())
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json({ limit: '4gb' }));
 
@@ -42,6 +40,6 @@ app.get('/api/getmodel', async function (req, res) {
 
 })
 
-var port = process.env.PORT || 80
+var port = process.env.PORT || 3001
 app.listen(port);
 console.log("Server running on port " + port);

@@ -66,5 +66,9 @@
     {
         "ClassID": 16,
         "Name": "Lucky Bamboo"
+    },
+    {
+        "ClassID": 17,
+        "Name" : "Snake Plant"
     }
 ]

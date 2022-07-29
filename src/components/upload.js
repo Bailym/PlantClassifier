@@ -63,7 +63,7 @@ class Upload extends React.Component {
 
         var tempClassifier = this.state.classifier;
         //can be change to other source
-        await axios.get('http://localhost:80/api/getmodel')
+        await axios.get('/api/getmodel')
             .then(function (response) {
                 try {
                     let tensorObj = response.data
@@ -100,7 +100,7 @@ class Upload extends React.Component {
         });
 
 
-        await axios.post('http://localhost:80/api/updatemodel', { [classId]: datasetObj[classId] })
+        await axios.post('/api/updatemodel', { [classId]: datasetObj[classId] })
             .then(function (response) {
                 console.log("Model saved");
             })
